@@ -117,7 +117,6 @@
         <div class="controls">
           <button id="addBtn" type="submit" class="primary">Agregar</button>
           <button id="clearForm" type="button">Limpiar</button>
-          <button id="showList" type="button">Ver lista</button>
         </div>
 
       </form>
@@ -128,7 +127,6 @@
       <h2 style="margin-top:0;margin-bottom:8px">Conceptos guardados</h2>
       <div id="list" class="list" aria-live="polite"></div>
       <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
-        <button id="exportJson" type="button">Exportar JSON</button>
         <button id="clearAll" type="button" class="danger">Borrar todo</button>
       </div>
     </aside>
@@ -146,9 +144,7 @@
     const listEl = document.getElementById('list');
     const addBtn = document.getElementById('addBtn');
     const clearFormBtn = document.getElementById('clearForm');
-    const showListBtn = document.getElementById('showList');
     const clearAllBtn = document.getElementById('clearAll');
-    const exportBtn = document.getElementById('exportJson');
 
     // Renderiza la lista en la vista
     function renderList(){
@@ -202,11 +198,6 @@
     // Limpia el formulario
     clearFormBtn.addEventListener('click', () => form.reset());
 
-    // Ver lista (pone foco en la vista)
-    showListBtn.addEventListener('click', () => {
-      listEl.scrollIntoView({behavior:'smooth'});
-      renderList();
-    });
 
     // Borrar todo el arreglo (confirmación)
     clearAllBtn.addEventListener('click', () => {
@@ -217,21 +208,6 @@
       }
     });
 
-    // Exportar JSON (útil para guardar offline)
-    exportBtn.addEventListener('click', () => {
-      if(conceptos.length === 0) return alert('No hay conceptos para exportar.');
-      const data = JSON.stringify(conceptos, null, 2);
-      // descarga como archivo
-      const blob = new Blob([data], {type: 'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'conceptos.json';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    });
 
     // Al enviar el formulario
     form.addEventListener('submit', agregarConcepto);
