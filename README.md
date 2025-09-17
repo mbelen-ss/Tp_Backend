@@ -1,5 +1,6 @@
 # Tp_Backend
 Trabajo Practico 1 - Manejando el Backend
+CASOS DE PRUEBA:
 1) GET /concepts (listar)
 
 Precondicion: Asegurarse que el servidor está corriendo
@@ -39,3 +40,7 @@ Pasos:
 3.presionar el boton Agregar.
 
 Resultado esperado: El nuevo concepto aparece en la lista de la derecha
+
+
+
+Reflexión: Tuve problemas en conectar el servidor, porque no había incluido el método POST, por lo que nada se guardaba en el archivo concepts.json. Además, la página no se abría desde http://localhost:3000/, sino que la abría haciendo doble clic en el archivo HTML. Pude resolverlo agregando la lógica necesaria para el POST y sirviendo la página directamente desde el servidor. Con eso logré que los conceptos se guarden correctamente y que la aplicación funcione accediendo por http://localhost:3000/.

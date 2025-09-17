@@ -134,86 +134,102 @@
   </div>
 
   <script>
-    // Arreglo donde se guardan los conceptos (requisito: guardar en arreglos)
-    const conceptos = [];
+  const conceptos = [];
+  const form = document.getElementById('conceptForm');
+  const nameInput = document.getElementById('conceptName');
+  const descInput = document.getElementById('conceptDesc');
+  const listEl = document.getElementById('list');
+  const clearFormBtn = document.getElementById('clearForm');
+  const clearAllBtn = document.getElementById('clearAll');
 
-    // Elementos
-    const form = document.getElementById('conceptForm');
-    const nameInput = document.getElementById('conceptName');
-    const descInput = document.getElementById('conceptDesc');
-    const listEl = document.getElementById('list');
-    const addBtn = document.getElementById('addBtn');
-    const clearFormBtn = document.getElementById('clearForm');
-    const clearAllBtn = document.getElementById('clearAll');
-
-    // Renderiza la lista en la vista
-    function renderList(){
-      listEl.innerHTML = '';
-      if(conceptos.length === 0){
-        listEl.innerHTML = '<div class="empty">No hay conceptos guardados.</div>';
-        return;
-      }
-
-      conceptos.forEach((c, idx) => {
-        const item = document.createElement('article');
-        item.className = 'item';
-        const title = document.createElement('h3');
-        title.textContent = (idx+1) + '. ' + c.nombre;
-        const desc = document.createElement('p');
-        desc.textContent = c.descripcion;
-        desc.className = 'muted';
-
-        item.appendChild(title);
-        item.appendChild(desc);
-        listEl.appendChild(item);
-      });
+  // Render
+  function renderList(){
+    listEl.innerHTML = '';
+    if(conceptos.length === 0){
+      listEl.innerHTML = '<div class="empty">No hay conceptos guardados.</div>';
+      return;
     }
+    conceptos.forEach((c, idx) => {
+      const item = document.createElement('article');
+      item.className = 'item';
+      const title = document.createElement('h3');
+      title.textContent = (idx+1) + '. ' + c.nombre;
+      const desc = document.createElement('p');
+      desc.textContent = c.descripcion;
+      desc.className = 'muted';
+      item.appendChild(title);
+      item.appendChild(desc);
+      listEl.appendChild(item);
+    });
+  }
 
-    // Valida y agrega un concepto al arreglo
-    function agregarConcepto(e){
-      e.preventDefault();
-      const nombre = nameInput.value.trim();
-      const descripcion = descInput.value.trim();
-
-      if(!nombre){
-        nameInput.focus();
-        return alert('Por favor escribí el nombre del concepto.');
-      }
-      if(!descripcion){
-        descInput.focus();
-        return alert('Por favor desarrollá el concepto.');
-      }
-
-      // Guardar en el arreglo
-      conceptos.push({ nombre, descripcion });
-
-      // Limpiar formulario
-      form.reset();
-      nameInput.focus();
-
-      // Actualizar lista
+  // Cargar desde servidor al iniciar
+  async function loadFromServer(){
+    try {
+      const res = await fetch('/api/concepts'); // misma origin, sin host necesario
+      if (!res.ok) throw new Error('Error al cargar');
+      const data = await res.json();
+      conceptos.length = 0;
+      data.forEach(c => conceptos.push(c));
+      renderList();
+    } catch (err) {
+      console.warn('No se pudo cargar desde server:', err);
       renderList();
     }
+  }
 
-    // Limpia el formulario
-    clearFormBtn.addEventListener('click', () => form.reset());
+  // Enviar al servidor (POST)
+  async function agregarConcepto(e){
+    e.preventDefault();
+    const nombre = nameInput.value.trim();
+    const descripcion = descInput.value.trim();
+    if(!nombre){ nameInput.focus(); return alert('Por favor escribí el nombre del concepto.'); }
+    if(!descripcion){ descInput.focus(); return alert('Por favor desarrollá el concepto.'); }
 
-
-    // Borrar todo el arreglo (confirmación)
-    clearAllBtn.addEventListener('click', () => {
-      if(!conceptos.length) return alert('No hay nada para borrar.');
-      if(confirm('¿Querés borrar todos los conceptos guardados en esta sesión?')){
-        conceptos.length = 0; // vacía el arreglo
-        renderList();
+    try {
+      const res = await fetch('/api/concepts', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ nombre, descripcion })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({error:'error'}));
+        return alert('Error al guardar en servidor: ' + (err.error || res.status));
       }
-    });
+      const saved = await res.json();
+      conceptos.push(saved);
+      renderList();
+      form.reset();
+      nameInput.focus();
+    } catch (err) {
+      // fallback: guardar localmente si no hay server (no recomendado para entrega)
+      console.warn('Fallo conexión, guardando localmente', err);
+      conceptos.push({ id: Date.now(), nombre, descripcion });
+      renderList();
+      form.reset();
+    }
+  }
 
+  // Clear
+  clearFormBtn.addEventListener('click', () => form.reset());
+  clearAllBtn.addEventListener('click', async () => {
+    if(!conceptos.length) return alert('No hay nada para borrar.');
+    if(!confirm('¿Querés borrar todos los conceptos guardados en el servidor?')) return;
+    try {
+      const res = await fetch('/api/concepts', { method: 'DELETE' });
+      if (!res.ok) throw new Error('error');
+      conceptos.length = 0;
+      renderList();
+    } catch (err) {
+      alert('No se pudo borrar en el servidor.');
+    }
+  });
 
-    // Al enviar el formulario
-    form.addEventListener('submit', agregarConcepto);
+  form.addEventListener('submit', agregarConcepto);
 
-    // Render inicial
-    renderList();
-  </script>
+  // carga inicial
+  loadFromServer();
+</script>
+
 </body>
 </html>
